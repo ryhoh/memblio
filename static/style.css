@@ -1,0 +1,50 @@
+:root {
+  --color-main:        78,  52,  46;
+  --color-0:      rgb(188, 170, 164);
+  --color-1:      rgb(239, 235, 233);
+  --bg-color:     #FFE0B2;
+
+  --tile-offset: 1.375em;
+}
+
+
+body {
+  font-family: "ヒラギノ丸ゴ Pro W4","ヒラギノ丸ゴ Pro W3","ヒラギノ丸ゴ Pro",
+  "Hiragino Maru Gothic Pro","ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro",
+  "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+  color: #111;
+  background-color: var(--bg-color);
+}
+
+h1 {
+  display: inline;
+  padding-left: 0.5em;
+  padding-right: 1em;
+}
+
+table {
+  border-spacing: 5px;
+}
+
+th, td {
+  padding: 5px;
+  border-radius: 10px;
+}
+
+th {
+  color: #FAFAFA;
+  font-size: 17px;
+  padding: 4px;
+}
+
+th {
+  background-color: rgb(var(--color-main));
+}
+
+tr.bg0 td {
+  background-color: var(--color-0);
+}
+
+tr.bg1 td {
+  background-color: var(--color-1);
+}

@@ -1,2 +1,5 @@
 memblio/*
 .idea/*
+db/psql/*
+logfile
+src/__pycache__/*
