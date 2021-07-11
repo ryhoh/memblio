@@ -1,23 +1,39 @@
-from flask import Flask, render_template, request, redirect, url_for, Response
+from fastapi import Body, Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import uvicorn
 
-from src import select_all, access_book_info, insert_book
-
-
-app = Flask(__name__)
-
-
-@app.route("/", methods=["GET"])
-def main_page():
-    books = select_all()
-    return render_template("index.html", books=books)
+from src import db
 
 
-@app.route("/register/book/", methods=["POST"])
-def register_book():
-    info = access_book_info(isbn=request.form['ISBN'])
-    insert_book(info=info, media=request.form['Media'])
-    return "registered!\n"
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
+
+@app.get("/")
+async def root(request: Request):
+    own_book_df = db.select_existing_books()
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "books": own_book_df,
+    })
+
+
+@app.post("/api/v1/register/book/")
+def register_book(isbn13: str = Form(...), media: str = Form(...), owner: str = Form(...)):
+    isbn13 = isbn13.replace('-', '')
+    if len(isbn13) != 13:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid ISBN (use 13-digit)")
+    
+    try:
+        db.register_book(isbn13)
+        db.register_own(isbn13, media, owner)
+    except Exception as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Exception throwed:", e)
+
+    return RedirectResponse('/', status.HTTP_301_MOVED_PERMANENTLY)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=48398, threaded=True)
+    uvicorn.run(app, debug=True, host='127.0.0.1', port=50000)

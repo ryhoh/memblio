@@ -1,5 +1,7 @@
-memblio/*
+venv/*
 .idea/*
 db/psql/*
 logfile
 src/__pycache__/*
+
+.*

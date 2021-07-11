@@ -1,33 +1,41 @@
-from typing import Dict
-import xml.etree.ElementTree as et
+from typing import Any, Dict, Optional
+import json
 
-from urllib import request
-
-
-url = "http://iss.ndl.go.jp/api/sru?operation=searchRetrieve&query=isbn="
-xmlns = '{http://www.loc.gov/zing/srw/}'
-xmlns_dc = '{http://purl.org/dc/elements/1.1/}'
+import requests
 
 
-def access_book_info(isbn: str) -> Dict[str, str]:
+url = "https://www.googleapis.com/books/v1/volumes"
+
+
+def request_book_info(isbn13: str) -> Optional[Dict[str, Any]]:
     """
-    国立国会図書館のAPIを利用して書籍情報を得る
-    @return Tuple(Title, ISBN, Author)
+    Using Google Books APIs
+    
+    :return: dict of information if success else None
     """
-    with request.urlopen(request.Request(url + isbn)) as response:
-        xml = response.read()
+    response = requests.get(url, params={'q': 'isbn:' + isbn13})
+    if (response.status_code // 100 == 4):
+        raise ValueError("invalid isbn and got", response.status_code)
+    if (response.status_code // 100 == 5):
+        return None
 
-    tree = et.fromstring(xml)
-    srw_dc = et.fromstring(
-        tree.find(xmlns + 'records').find(xmlns + 'record').find(xmlns + 'recordData').text
-    )
+    contents = json.loads(response.text)
+    volume_info = contents['items'][0]['volumeInfo']
+    title = volume_info['title']
+    image_links = volume_info['imageLinks']
+    thumbnail_url = image_links['smallThumbnail'] if 'smallThumbnail' in image_links.keys() else image_links['thumbnail']
 
-    title = srw_dc.find(xmlns_dc + 'title').text
-    author = srw_dc.find(xmlns_dc + 'creator').text
+    thumbnail = None
+    response = requests.get(thumbnail_url)
+    if (response.status_code // 100 == 2):
+        thumbnail = bytes(response.content)
 
-    return dict({'title': title, 'isbn': isbn, 'author': author})
+    return dict({'title': title, 'isbn13': isbn13, 'thumbnail': thumbnail})
 
 
 if __name__ == '__main__':
     # print(get_book_info(isbn='9784873115856'))
-    print(access_book_info(isbn='9784774185033'))
+    res = request_book_info(isbn13='9784774185033')
+    # print(res)
+    # print(type(res['thumbnail']))
+    # print(bytes(res['thumbnail']))

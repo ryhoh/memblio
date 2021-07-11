@@ -2,21 +2,47 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <title>Memblio</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <title>Memblio: A virtual bibliotheque memorize your books.</title>
+    <link rel="stylesheet" type="text/css" href="../static/style.css">
 </head>
 <body>
-    <h1>蔵書一覧</h1>
-    <table>
-        <tr>
-            <th>書籍名</th><th>ISBN</th><th>媒体</th><th>著者</th>
-        </tr>
-        {% for (id, name, isbn, media, author) in books %}
-        {% set mod = loop.index % 2 %}
-        <tr class="bg{{mod}}">
-            <td>{{ name }}</td><td>{{ isbn }}</td><td>{{ media }}</td><td>{{ author }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="island">
+        <h1>Memblio: A virtual bibliotheque memorize your books.</h1>
+    </div>
+
+    <div class="island" style="text-align: center;">
+        <form action="/api/v1/register/book/", method="POST">
+            <input type="text" name="isbn13" placeholder="ISBN (13 digits)" width="13">
+            <input type="text" name="media" placeholder="paper" width="16">
+            <input type="text" name="owner" placeholder="owner name" width="16">
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <div class="island" style="padding-left: 0;">
+        <table class="centering">
+            <tr>
+                <th class="icon_cell"></th>
+                <th class="title_cell">Title</th>
+                <th class="isbn_cell">ISBN</th>
+                <th class="media_type_cell">Media Type</th>
+                <th class="address_cell">Address</th>
+                <th class="read_cell">Read</th>
+            </tr>
+            {% for (title, isbn13, media_name, thumbnail) in books %}
+            {% set mod = loop.index % 2 %}
+            <tr class="bg{{mod}}">
+                <td class="icon_cell">
+                    <img src="data:image/jpeg;base64,{{ thumbnail }}" width=48px>
+                </td>
+                <td class="title_cell">{{ title }}</td>
+                <td class="isbn_cell">{{ isbn13 }}</td>
+                <td class="media_type_cell">{{ media_name }}</td>
+                <td class="address_cell"></td>
+                <td class="read_cell"></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </body>
 </html>

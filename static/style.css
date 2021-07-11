@@ -1,50 +1,101 @@
-:root {
-  --color-main:        78,  52,  46;
-  --color-0:      rgb(188, 170, 164);
-  --color-1:      rgb(239, 235, 233);
-  --bg-color:     #FFE0B2;
-
-  --tile-offset: 1.375em;
-}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500&display=swap');
 
 
 body {
-  font-family: "ヒラギノ丸ゴ Pro W4","ヒラギノ丸ゴ Pro W3","ヒラギノ丸ゴ Pro",
-  "Hiragino Maru Gothic Pro","ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro",
-  "メイリオ", Meiryo, Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
-  color: #111;
-  background-color: var(--bg-color);
+    font-family: "Noto Sans JP";
+    font-weight: lighter;
+    --color-bg: #713210;
+    background-color: var(--color-bg);
 }
 
 h1 {
-  display: inline;
-  padding-left: 0.5em;
-  padding-right: 1em;
+    text-align: center;
+}
+
+.island {
+    background-color: white;
+    color: black;
+    border-radius: 12px;
+    border: 4px solid #cbac69;
+    margin-top: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-left: 1em;
+}
+
+.horizontal_container {
+    display: flex;
+    align-items: center;
+}
+
+.description {
+    width: 100%;
+    background-color: #ECF0F1;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.important {
+    font-weight: bolder;
+    color: #102770;
 }
 
 table {
-  border-spacing: 5px;
+    border-spacing: 5px;
 }
 
 th, td {
-  padding: 5px;
-  border-radius: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    /* border-radius: 10px; */
 }
 
 th {
-  color: #FAFAFA;
-  font-size: 17px;
-  padding: 4px;
+    color: #FAFAFA;
+    background-color: #354546;
+    font-size: 17px;
+    /* padding: 4px; */
 }
 
-th {
-  background-color: rgb(var(--color-main));
+td {
+    background-color: #d5e5e6;
 }
 
-tr.bg0 td {
-  background-color: var(--color-0);
+.centering {
+    margin-left: auto;
+    margin-right: auto;
 }
 
-tr.bg1 td {
-  background-color: var(--color-1);
+.icon_cell {
+    width: 4rem;
+    min-width: 4rem;
+    text-align: center;
+}
+
+.title_cell {
+    width: 24rem;
+}
+
+.isbn_cell {
+    width: 8rem;
+    min-width: 8rem;
+    text-align: center;
+}
+
+.media_type_cell {
+    width: 8rem;
+    min-width: 8rem;
+    text-align: center;
+}
+
+.address_cell {
+    width: 8rem;
+    min-width: 8rem;
+}
+
+.read_cell {
+    width: 4rem;
+    min-width: 4rem;
 }
