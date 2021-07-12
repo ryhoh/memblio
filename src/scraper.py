@@ -1,6 +1,8 @@
 from typing import Any, Dict, Optional
+from io import BytesIO
 import json
 
+from PIL import Image
 import requests
 
 
@@ -28,7 +30,9 @@ def request_book_info(isbn13: str) -> Optional[Dict[str, Any]]:
     thumbnail = None
     response = requests.get(thumbnail_url)
     if (response.status_code // 100 == 2):
-        thumbnail = bytes(response.content)
+        img = Image.open(BytesIO(response.content)).convert('RGB')
+        img.thumbnail((64, 64))
+        thumbnail = bytes(img.tobytes())
 
     return dict({'title': title, 'isbn13': isbn13, 'thumbnail': thumbnail})
 
