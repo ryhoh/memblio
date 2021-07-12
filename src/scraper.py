@@ -7,7 +7,7 @@ import requests
 
 
 url = "https://www.googleapis.com/books/v1/volumes"
-thumbnail_size = (96, 96)
+thumbnail_size = (90, 90)
 
 
 def request_book_info(isbn13: str) -> Optional[Dict[str, Any]]:
