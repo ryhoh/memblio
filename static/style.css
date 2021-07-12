@@ -105,6 +105,10 @@ td {
     text-align: center;
 }
 
+.read_cell a {
+    text-decoration: none;
+}
+
 td.read_cell {
     font-size: x-large;
 }

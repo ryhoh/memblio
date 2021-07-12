@@ -63,6 +63,7 @@ CREATE TABLE public.read_book (
 	read_book_id serial NOT NULL,
 	user_name varchar(15) NOT NULL,
 	own_id int4 NOT NULL,
+	is_read bool NOT NULL DEFAULT false,
 	CONSTRAINT read_book_pk PRIMARY KEY (read_book_id),
 	CONSTRAINT read_book_un UNIQUE (user_name, own_id),
 	CONSTRAINT read_book_fk_own FOREIGN KEY (own_id) REFERENCES public.own(own_id) ON DELETE CASCADE ON UPDATE RESTRICT,
@@ -73,11 +74,31 @@ CREATE TABLE public.read_book (
 -- Data Insertion
 --------------------
 
-insert into "user" values ('ryhoh');
-
 insert into media values
 	('paper'),
 	('kindle'),
 	('pdf'),
-	('epub')
-;
+	('epub');
+
+INSERT INTO public."user" (user_name) VALUES
+	('ryhoh'),
+	('testuser');
+
+INSERT INTO public.book (isbn13,title,thumbnail) VALUES
+	('9784873117584','ゼロから作るDeep Learning',NULL),
+	('9784774192239','PythonユーザのためのJupyter「実践」入門',NULL),
+	('9784297100919','Vue.js入門',NULL),
+	('9784297100896','内部構造から学ぶPostgreSQL設計・運用計画の鉄則',NULL);
+
+INSERT INTO public.own (isbn13,media_name,own_user) VALUES
+	('9784873117584','paper','ryhoh'),
+	('9784774192239','paper','ryhoh'),
+	('9784297100896','kindle','ryhoh'),
+	('9784297100919','kindle','testuser');
+
+INSERT INTO public.read_book (user_name,own_id,is_read) VALUES
+	('testuser',1,true),
+	('ryhoh',1,true),
+	('ryhoh',2,true),
+	('ryhoh',3,false),
+	('testuser',4,true);

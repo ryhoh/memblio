@@ -32,7 +32,7 @@
                 <th class="read_cell">Read</th>
                 {% endif %}
             </tr>
-            {% for (title, isbn13, media_name, is_read, thumbnail) in books %}
+            {% for (title, isbn13, media_name, own_id, is_read, thumbnail) in books %}
             {% set mod = loop.index % 2 %}
             <tr class="bg{{mod}}">
                 <td class="icon_cell">
@@ -42,9 +42,16 @@
                 <td class="isbn_cell">{{ isbn13 }}</td>
                 <td class="media_type_cell">{{ media_name }}</td>
                 <td class="address_cell"></td>
-                {% if is_read is not none %}
+                {% if user_name is not none %}
                 <td class="read_cell">
-                    {{ '✅' if is_read else '📚' }}
+                    <form action="/api/v1/update/read_book/" name="is_read_form_{{ loop.index }}" method="POST">
+                        <input type="hidden" name="user_name" value="{{ user_name }}">
+                        <input type="hidden" name="own_id" value="{{ own_id }}">
+                        <input type="hidden" name="is_read" value="{{ '0' if is_read else '1' }}">
+                        <a href="javascript:is_read_form_{{ loop.index }}.submit()">
+                            {{ '✅' if is_read else '📚' }}
+                        </a>
+                    </form>
                 </td>
                 {% endif %}
             </tr>

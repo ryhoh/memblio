@@ -10,39 +10,58 @@ from src import scraper
 
 DB = os.environ.get('DATABASE_URL') or 'postgres://web:web@127.0.0.1:5432/memblio'
 
+with open('static/no_image.jpg', 'rb') as f:
+    no_image = f.read()
+
+
+def encode_thumbnail(table):
+    res = []
+    for row in table:
+        binary = no_image if row[5] is None else row[5]
+        res.append(
+            list(row[:5]) + [base64.b64encode(binary).decode('utf-8')]
+        )
+    return res
+
 
 def select_existing_books() -> List[Tuple]:
     """
     
-    :return: title, isbn13, media_name, thumbnail
+    :return: title, isbn13, media_name, own_id, is_read, thumbnail
     """
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
             cur.execute("""
-SELECT book.title, own.isbn13, own.media_name, NULL AS is_read, book.thumbnail
+SELECT book.title, own.isbn13, own.media_name, own.own_id, NULL AS is_read, book.thumbnail
 FROM own
 JOIN book
 ON own.isbn13 = book.isbn13
 ORDER BY book.title ASC, own.isbn13 ASC;
             """)
             res = cur.fetchall()
-    return [list(row[:4]) + [base64.b64encode(row[4]).decode('utf-8')] for row in res]
+    return encode_thumbnail(res)
 
 
 def select_existing_books_with_user(user_name: str) -> List[Tuple]:
     """
     
-    :return: title, isbn13, media_name, thumbnail
+    :return: title, isbn13, media_name, own_id, is_read, thumbnail
     """
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
+            # fixme サブクエリを2回しているために遅い
             cur.execute("""
-SELECT book.title, own.isbn13, own.media_name,
+SELECT book.title, own.isbn13, own.media_name, own.own_id,
 	CASE
-		WHEN EXISTS
-			(SELECT read_book.read_book_id 
+		WHEN EXISTS (
+			SELECT read_book.is_read
 			FROM read_book
-			WHERE read_book.user_name = %s AND own.own_id = read_book.own_id) THEN true
+			WHERE read_book.user_name = 'ryhoh' AND own.own_id = read_book.own_id
+		) THEN (
+			SELECT read_book.is_read
+			FROM read_book
+			WHERE read_book.user_name = 'ryhoh' AND own.own_id = read_book.own_id
+		)
 		ELSE false
 	END AS is_read,
     book.thumbnail
@@ -51,7 +70,7 @@ JOIN book ON own.isbn13 = book.isbn13
 ORDER BY book.title ASC, own.isbn13 ASC;
             """, (user_name,))
             res = cur.fetchall()
-    return [list(row[:4]) + [base64.b64encode(row[4]).decode('utf-8')] for row in res]
+    return encode_thumbnail(res)
 
 
 def register_book(isbn13: str) -> bool:
@@ -86,6 +105,18 @@ VALUES (%s, %s, %s);
                 raise ValueError("UniqueViolation with", (isbn13, media_name, own_user))
             except ForeignKeyViolation:
                 raise ValueError("ForeignKeyViolation with", (isbn13, media_name, own_user))
+
+
+def upsert_read_book(user_name: str, own_id: int, is_read: bool):
+    with psycopg2.connect(DB) as sess:
+        with sess.cursor() as cur:
+            cur.execute("""
+INSERT INTO read_book (user_name, own_id, is_read)
+VALUES (%s, %s, %s)
+ON CONFLICT ON CONSTRAINT read_book_un
+DO
+UPDATE SET is_read = %s;
+            """, (user_name, own_id, is_read, is_read))
 
 
 if __name__ == '__main__':
