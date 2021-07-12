@@ -28,9 +28,11 @@
                 <th class="isbn_cell">ISBN</th>
                 <th class="media_type_cell">Media Type</th>
                 <th class="address_cell">Address</th>
+                {% if user_name is not none %}
                 <th class="read_cell">Read</th>
+                {% endif %}
             </tr>
-            {% for (title, isbn13, media_name, thumbnail) in books %}
+            {% for (title, isbn13, media_name, is_read, thumbnail) in books %}
             {% set mod = loop.index % 2 %}
             <tr class="bg{{mod}}">
                 <td class="icon_cell">
@@ -40,7 +42,11 @@
                 <td class="isbn_cell">{{ isbn13 }}</td>
                 <td class="media_type_cell">{{ media_name }}</td>
                 <td class="address_cell"></td>
-                <td class="read_cell"></td>
+                {% if is_read is not none %}
+                <td class="read_cell">
+                    {{ '✅' if is_read else '📚' }}
+                </td>
+                {% endif %}
             </tr>
             {% endfor %}
         </table>

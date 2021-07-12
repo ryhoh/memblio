@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Body, Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,10 +16,19 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 async def root(request: Request):
-    own_book_df = db.select_existing_books()
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "books": own_book_df,
+        "books": db.select_existing_books(),
+        "user_name": None,
+    })
+
+
+@app.get("/{user_name}")
+async def root(request: Request, user_name: str):
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "books": db.select_existing_books_with_user(user_name),
+        "user_name": user_name,
     })
 
 
@@ -34,6 +45,12 @@ def register_book(isbn13: str = Form(...), media: str = Form(...), owner: str = 
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Exception throwed:", e)
 
     return RedirectResponse('/', status.HTTP_301_MOVED_PERMANENTLY)
+
+
+# @app.post("/api/v1/update/read_book/")
+# def register_book(user_name: str = Form(...), media: str = Form(...), owner: str = Form(...)):
+
+
 
 if __name__ == '__main__':
     uvicorn.run(app, debug=True, host='127.0.0.1', port=50000)

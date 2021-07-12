@@ -19,27 +19,39 @@ def select_existing_books() -> List[Tuple]:
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
             cur.execute("""
-SELECT book.title, own.isbn13, own.media_name, book.thumbnail
+SELECT book.title, own.isbn13, own.media_name, NULL AS is_read, book.thumbnail
 FROM own
 JOIN book
-ON own.isbn13 = book.isbn13;
+ON own.isbn13 = book.isbn13
+ORDER BY book.title ASC, own.isbn13 ASC;
             """)
             res = cur.fetchall()
+    return [list(row[:4]) + [base64.b64encode(row[4]).decode('utf-8')] for row in res]
 
 
-    return [list(row[:3]) + [base64.b64encode(row[3]).decode('utf-8')] for row in res]
-
-
-# def select_books() -> pd.DataFrame:
-#     book_df = pd.read_csv(os.path.join('db/', 'book.csv'))
-#     media_df = pd.read_csv(os.path.join('db/', 'media.csv'))
-#     own_df = pd.read_csv(os.path.join('db/', 'own.csv'))
-
-#     own_book_df = own_df \
-#         .merge(book_df, how='inner', on='isbn13') \
-#         .merge(media_df, how='inner', left_on='media_name', right_on='media_name')
-
-#     return own_book_df
+def select_existing_books_with_user(user_name: str) -> List[Tuple]:
+    """
+    
+    :return: title, isbn13, media_name, thumbnail
+    """
+    with psycopg2.connect(DB) as sess:
+        with sess.cursor() as cur:
+            cur.execute("""
+SELECT book.title, own.isbn13, own.media_name,
+	CASE
+		WHEN EXISTS
+			(SELECT read_book.read_book_id 
+			FROM read_book
+			WHERE read_book.user_name = %s AND own.own_id = read_book.own_id) THEN true
+		ELSE false
+	END AS is_read,
+    book.thumbnail
+FROM own
+JOIN book ON own.isbn13 = book.isbn13
+ORDER BY book.title ASC, own.isbn13 ASC;
+            """, (user_name,))
+            res = cur.fetchall()
+    return [list(row[:4]) + [base64.b64encode(row[4]).decode('utf-8')] for row in res]
 
 
 def register_book(isbn13: str) -> bool:
@@ -74,29 +86,6 @@ VALUES (%s, %s, %s);
                 raise ValueError("UniqueViolation with", (isbn13, media_name, own_user))
             except ForeignKeyViolation:
                 raise ValueError("ForeignKeyViolation with", (isbn13, media_name, own_user))
-
-
-# def insert_book(info: Dict, media: str) -> None:
-#     order_media_id = """
-#     SELECT media.id
-#     FROM media
-#     WHERE media.name = %s;
-#     """
-
-#     order_insert = """
-#     INSERT INTO book (name, isbn, author, media_id)
-#     VALUES (%s, %s, %s, %s);
-#     """
-
-#     if media not in MEDIA:
-#         raise ValueError('supported media:', MEDIA, 'but given', media)
-
-#     with _connect() as sess:
-#         with sess.cursor() as cur:
-#             cur.execute(order_media_id, (media,))
-#             media_id = cur.fetchone()[0]  # scalar
-#             cur.execute(order_insert, (info['title'], info['isbn'], info['author'], media_id))
-#         sess.commit()
 
 
 if __name__ == '__main__':
