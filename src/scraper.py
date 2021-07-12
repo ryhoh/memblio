@@ -7,6 +7,7 @@ import requests
 
 
 url = "https://www.googleapis.com/books/v1/volumes"
+thumbnail_size = (96, 96)
 
 
 def request_book_info(isbn13: str) -> Optional[Dict[str, Any]]:
@@ -31,7 +32,7 @@ def request_book_info(isbn13: str) -> Optional[Dict[str, Any]]:
     response = requests.get(thumbnail_url)
     if (response.status_code // 100 == 2):
         img = Image.open(BytesIO(response.content)).convert('RGB')
-        img.thumbnail((64, 64))
+        img.thumbnail(thumbnail_size)
         stream = BytesIO()
         img.save(stream, format='jpeg')
         thumbnail = stream.getvalue()
