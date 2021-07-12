@@ -32,14 +32,17 @@ def request_book_info(isbn13: str) -> Optional[Dict[str, Any]]:
     if (response.status_code // 100 == 2):
         img = Image.open(BytesIO(response.content)).convert('RGB')
         img.thumbnail((64, 64))
-        thumbnail = bytes(img.tobytes())
+        stream = BytesIO()
+        img.save(stream, format='jpeg')
+        thumbnail = stream.getvalue()
 
     return dict({'title': title, 'isbn13': isbn13, 'thumbnail': thumbnail})
 
 
 if __name__ == '__main__':
     # print(get_book_info(isbn='9784873115856'))
-    res = request_book_info(isbn13='9784774185033')
+    # res = request_book_info(isbn13='9784774185033')
+    res = request_book_info(isbn13='9784297100919')
     # print(res)
     # print(type(res['thumbnail']))
-    # print(bytes(res['thumbnail']))
+    Image.open(BytesIO(res['thumbnail'])).convert('RGB').show()
