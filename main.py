@@ -18,6 +18,8 @@ async def root(request: Request):
         "request": request,
         "books": db.select_existing_books(),
         "user_name": None,
+        "media_names": db.media_names,
+        "user_names": db.user_names,
     })
 
 
@@ -27,6 +29,8 @@ async def root(request: Request, user_name: str):
         "request": request,
         "books": db.select_existing_books_with_user(user_name),
         "user_name": user_name,
+        "media_names": db.media_names,
+        "user_names": db.user_names,
     })
 
 

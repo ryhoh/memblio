@@ -13,6 +13,13 @@ DB = os.environ.get('DATABASE_URL') or 'postgres://web:web@127.0.0.1:5432/membli
 with open('static/no_image.jpg', 'rb') as f:
     no_image = f.read()
 
+with psycopg2.connect(DB) as sess:
+    with sess.cursor() as cur:
+        cur.execute("SELECT name FROM media;")
+        media_names = sorted(elm[0] for elm in cur.fetchall())
+        cur.execute("SELECT user_name FROM \"user\";")
+        user_names = sorted(elm[0] for elm in cur.fetchall())
+
 
 def encode_thumbnail(table):
     res = []
@@ -81,7 +88,7 @@ def register_book(isbn13: str) -> bool:
     """
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
-            cur.execute("""SELECT isbn13 FROM book WHERE isbn13 = %s;""", (isbn13,))
+            cur.execute("SELECT isbn13 FROM book WHERE isbn13 = %s;", (isbn13,))
             if len(cur.fetchall()):
                 return False  # Already registered
         
