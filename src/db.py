@@ -40,10 +40,9 @@ def select_existing_books() -> List[Tuple]:
         with sess.cursor() as cur:
             cur.execute("""
 SELECT book.title, own.isbn13, own.media_name, own.own_id, NULL AS is_read, book.thumbnail
-FROM own
-JOIN book
-ON own.isbn13 = book.isbn13
-ORDER BY book.title ASC, own.isbn13 ASC;
+  FROM own
+  JOIN book ON own.isbn13 = book.isbn13
+ ORDER BY book.title ASC, own.isbn13 ASC;
             """)
             res = cur.fetchall()
     return encode_thumbnail(res)
@@ -51,30 +50,20 @@ ORDER BY book.title ASC, own.isbn13 ASC;
 
 def select_existing_books_with_user(user_name: str) -> List[Tuple]:
     """
+    特定ユーザの読書状況を付与して書架全体をセレクトする
     
     :return: title, isbn13, media_name, own_id, is_read, thumbnail
     """
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
-            # fixme サブクエリを2回しているために遅い
             cur.execute("""
 SELECT book.title, own.isbn13, own.media_name, own.own_id,
-	CASE
-		WHEN EXISTS (
-			SELECT read_book.is_read
-			FROM read_book
-			WHERE read_book.user_name = 'ryhoh' AND own.own_id = read_book.own_id
-		) THEN (
-			SELECT read_book.is_read
-			FROM read_book
-			WHERE read_book.user_name = 'ryhoh' AND own.own_id = read_book.own_id
-		)
-		ELSE false
-	END AS is_read,
-    book.thumbnail
-FROM own
-JOIN book ON own.isbn13 = book.isbn13
-ORDER BY book.title ASC, own.isbn13 ASC;
+	   COALESCE(read_book.is_read, False) AS is_read, book.thumbnail
+  FROM own
+  JOIN book ON own.isbn13 = book.isbn13
+  LEFT OUTER JOIN read_book ON own.own_id = read_book.own_id
+ WHERE read_book.user_name IS NULL OR read_book.user_name = %s
+ ORDER BY book.title ASC, own.isbn13 ASC;
             """, (user_name,))
             res = cur.fetchall()
     return encode_thumbnail(res)
@@ -120,8 +109,8 @@ def upsert_read_book(user_name: str, own_id: int, is_read: bool):
             cur.execute("""
 INSERT INTO read_book (user_name, own_id, is_read)
 VALUES (%s, %s, %s)
-ON CONFLICT ON CONSTRAINT read_book_un
-DO
+    ON CONFLICT ON CONSTRAINT read_book_un
+    DO
 UPDATE SET is_read = %s;
             """, (user_name, own_id, is_read, is_read))
 
