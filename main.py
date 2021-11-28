@@ -50,8 +50,8 @@ def register_book(isbn13: str = Form(...), media: str = Form(...), owner: str = 
 
 
 @app.post("/api/v1/update/read_book/")
-def register_book(user_name: str = Form(...), own_id: str = Form(...), is_read: str = Form(...)):
-    db.upsert_read_book(user_name, int(own_id), bool(int(is_read)))
+def read_book(user_name: str = Form(...), own_id: str = Form(...), is_read: str = Form(...)):
+    db.upsert_read_book(user_name, int(own_id), int(is_read))
     return RedirectResponse('/%s' % user_name, status.HTTP_301_MOVED_PERMANENTLY)
 
 

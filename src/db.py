@@ -17,7 +17,7 @@ with psycopg2.connect(DB) as sess:
     with sess.cursor() as cur:
         cur.execute("SELECT name FROM media;")
         media_names = sorted(elm[0] for elm in cur.fetchall())
-        cur.execute("SELECT user_name FROM \"user\";")
+        cur.execute("SELECT user_name FROM users;")
         user_names = sorted(elm[0] for elm in cur.fetchall())
 
 
@@ -58,11 +58,15 @@ def select_existing_books_with_user(user_name: str) -> List[Tuple]:
         with sess.cursor() as cur:
             cur.execute("""
 SELECT book.title, own.isbn13, own.media_name, own.own_id,
-	   COALESCE(read_book.is_read, False) AS is_read, book.thumbnail
-  FROM own
-  JOIN book ON own.isbn13 = book.isbn13
-  LEFT OUTER JOIN read_book ON own.own_id = read_book.own_id
- WHERE read_book.user_name IS NULL OR read_book.user_name = %s
+       COALESCE(is_read, 0), book.thumbnail
+  FROM book
+  JOIN own ON book.isbn13 = own.isbn13
+  LEFT OUTER JOIN (
+       SELECT own_id, user_name, is_read
+         FROM read_book
+        WHERE user_name = %s
+       ) AS rb 
+    ON own.own_id = rb.own_id
  ORDER BY book.title ASC, own.isbn13 ASC;
             """, (user_name,))
             res = cur.fetchall()
@@ -103,7 +107,7 @@ VALUES (%s, %s, %s);
                 raise ValueError("ForeignKeyViolation with", (isbn13, media_name, own_user))
 
 
-def upsert_read_book(user_name: str, own_id: int, is_read: bool):
+def upsert_read_book(user_name: str, own_id: int, is_read: int):
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
             cur.execute("""

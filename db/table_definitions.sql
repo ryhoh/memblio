@@ -39,8 +39,8 @@ CREATE TABLE public.media (
 	CONSTRAINT media_pk PRIMARY KEY (name)
 );
 
--- DROP TABLE public."user";
-CREATE TABLE public."user" (
+-- DROP TABLE public.user;
+CREATE TABLE public.users (
 	user_name varchar(15) NOT NULL,
 	CONSTRAINT user_pk PRIMARY KEY (user_name)
 );
@@ -55,7 +55,7 @@ CREATE TABLE public.own (
 	CONSTRAINT own_un UNIQUE (isbn13, media_name),
 	CONSTRAINT own_fk_isbn13 FOREIGN KEY (isbn13) REFERENCES public.book(isbn13) ON DELETE RESTRICT ON UPDATE RESTRICT,
 	CONSTRAINT own_fk_media FOREIGN KEY (media_name) REFERENCES public.media("name") ON DELETE RESTRICT ON UPDATE CASCADE,
-	CONSTRAINT own_fk_user FOREIGN KEY (own_user) REFERENCES public."user"(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
+	CONSTRAINT own_fk_user FOREIGN KEY (own_user) REFERENCES public.users(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- DROP TABLE public.read_book;
@@ -63,11 +63,11 @@ CREATE TABLE public.read_book (
 	read_book_id serial NOT NULL,
 	user_name varchar(15) NOT NULL,
 	own_id int4 NOT NULL,
-	is_read bool NOT NULL DEFAULT false,
+	is_read int4 NOT NULL DEFAULT 0,
 	CONSTRAINT read_book_pk PRIMARY KEY (read_book_id),
 	CONSTRAINT read_book_un UNIQUE (user_name, own_id),
 	CONSTRAINT read_book_fk_own FOREIGN KEY (own_id) REFERENCES public.own(own_id) ON DELETE CASCADE ON UPDATE RESTRICT,
-	CONSTRAINT read_book_fk_user FOREIGN KEY (user_name) REFERENCES public."user"(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
+	CONSTRAINT read_book_fk_user FOREIGN KEY (user_name) REFERENCES public.users(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 --------------------
@@ -80,7 +80,7 @@ insert into media values
 	('pdf'),
 	('epub');
 
-INSERT INTO public."user" (user_name) VALUES
+INSERT INTO public.users (user_name) VALUES
 	('ryhoh'),
 	('testuser');
 
@@ -97,8 +97,8 @@ INSERT INTO public.own (isbn13,media_name,own_user) VALUES
 	('9784297100919','kindle','testuser');
 
 INSERT INTO public.read_book (user_name,own_id,is_read) VALUES
-	('testuser',1,true),
-	('ryhoh',1,true),
-	('ryhoh',2,true),
-	('ryhoh',3,false),
-	('testuser',4,true);
+	('testuser',1,1),
+	('ryhoh',1,1),
+	('ryhoh',2,2),
+	('ryhoh',3,0),
+	('testuser',4,2);
