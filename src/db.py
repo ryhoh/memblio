@@ -58,7 +58,7 @@ def select_existing_books_with_user(user_name: str) -> List[Tuple]:
         with sess.cursor() as cur:
             cur.execute("""
 SELECT book.title, own.isbn13, own.media_name, own.own_id,
-       COALESCE(is_read, 0), book.thumbnail
+       COALESCE(is_read, 0) AS is_read, book.thumbnail
   FROM book
   JOIN own ON book.isbn13 = own.isbn13
   LEFT OUTER JOIN (
@@ -67,7 +67,7 @@ SELECT book.title, own.isbn13, own.media_name, own.own_id,
         WHERE user_name = %s
        ) AS rb 
     ON own.own_id = rb.own_id
- ORDER BY book.title ASC, own.isbn13 ASC;
+ ORDER BY is_read ASC, book.title ASC, own.isbn13 ASC;
             """, (user_name,))
             res = cur.fetchall()
     return encode_thumbnail(res)
