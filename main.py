@@ -1,10 +1,15 @@
-from fastapi import FastAPI, Form, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from datetime import timedelta
+from typing import Union
+
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 
 from src import db
+import src.user_authorization as user_auth
 
 
 app = FastAPI()
@@ -14,24 +19,52 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "books": db.select_existing_books(),
-        "user_name": None,
-        "media_names": db.media_names,
-        "user_names": db.user_names,
-    })
+    return FileResponse('static/index.html')
 
 
-@app.get("/{user_name}")
-async def root(request: Request, user_name: str):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "books": db.select_existing_books_with_user(user_name),
-        "user_name": user_name,
+@app.get("/api/v1/get/books/")
+async def get_books():
+    books = db.select_existing_books()
+    books = [
+        {
+            'title': book[0],
+            'isbn13': book[1],
+            'media_name': book[2],
+            #'address',
+            'own_id': book[3],
+            # is_read,
+            'thumbnail': book[5],
+        }
+    for book in books]
+    return {
+        "books": books,
         "media_names": db.media_names,
         "user_names": db.user_names,
-    })
+    }
+
+
+@app.post("/api/v1/get/books/byuser")
+async def get_books_by_user(
+    user: user_auth.UserInDB = Depends(user_auth.get_current_user),
+):
+    books = db.select_existing_books_with_user(user.username)
+    books = [
+        {
+            'title': book[0],
+            'isbn13': book[1],
+            'media_name': book[2],
+            #'address',
+            'own_id': book[3],
+            'is_read': book[4],
+            'thumbnail': book[5],
+        }
+    for book in books]
+    return {
+        "books": books,
+        "user_name": user.username,
+        "media_names": db.media_names,
+        "user_names": db.user_names,
+    }
 
 
 @app.post("/api/v1/register/book/")
@@ -44,15 +77,39 @@ def register_book(isbn13: str = Form(...), media: str = Form(...), owner: str = 
         db.register_book(isbn13)
         db.register_own(isbn13, media, owner)
     except Exception as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Exception throwed:", e)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Exception throwed:" + str(e))
 
-    return RedirectResponse('/', status.HTTP_301_MOVED_PERMANENTLY)
+    return {'result': 'success'}
 
 
 @app.post("/api/v1/update/read_book/")
 def read_book(user_name: str = Form(...), own_id: str = Form(...), is_read: str = Form(...)):
     db.upsert_read_book(user_name, int(own_id), int(is_read))
-    return RedirectResponse('/%s' % user_name, status.HTTP_301_MOVED_PERMANENTLY)
+    return {'result': 'success'}
+
+
+# for user authorization
+@app.post('/api/token')
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends()
+) -> Union[JSONResponse, HTTPException]:
+    user: Union[user_auth.UserInDB, bool] = user_auth.authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=user_auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = user_auth.create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+
+    return JSONResponse ({
+        "access_token": access_token,
+        "token_type": "bearer",
+        "username": user.username,
+    })
 
 
 if __name__ == '__main__':

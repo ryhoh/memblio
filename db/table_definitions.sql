@@ -2,7 +2,6 @@
 -- Sequence Definition
 --------------------
 
--- DROP SEQUENCE public.own_own_id_seq;
 CREATE SEQUENCE public.own_own_id_seq
 	INCREMENT BY 1
 	MINVALUE 1
@@ -11,20 +10,18 @@ CREATE SEQUENCE public.own_own_id_seq
 	CACHE 1
 	NO CYCLE;
 
--- DROP SEQUENCE public.read_book_read_book_id_seq;
 CREATE SEQUENCE public.read_book_read_book_id_seq
 	INCREMENT BY 1
 	MINVALUE 1
 	MAXVALUE 2147483647
 	START 1
 	CACHE 1
-	NO CYCLE;-- public.book definition
+	NO CYCLE;
 
 --------------------
 -- Table Definition
 --------------------
 
--- DROP TABLE public.book;
 CREATE TABLE public.book (
 	isbn13 bpchar(13) NOT NULL,
 	title varchar(63) NOT NULL,
@@ -33,19 +30,17 @@ CREATE TABLE public.book (
 );
 CREATE UNIQUE INDEX book_isbn13_idx ON public.book USING btree (isbn13);
 
--- DROP TABLE public.media;
 CREATE TABLE public.media (
 	"name" varchar(15) NOT NULL,
 	CONSTRAINT media_pk PRIMARY KEY (name)
 );
 
--- DROP TABLE public.user;
 CREATE TABLE public.users (
 	user_name varchar(15) NOT NULL,
+       hashed_password BYTEA NOT NULL,
 	CONSTRAINT user_pk PRIMARY KEY (user_name)
 );
 
--- DROP TABLE public.own;
 CREATE TABLE public.own (
 	own_id serial NOT NULL,
 	isbn13 bpchar(13) NOT NULL,
@@ -58,7 +53,6 @@ CREATE TABLE public.own (
 	CONSTRAINT own_fk_user FOREIGN KEY (own_user) REFERENCES public.users(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- DROP TABLE public.read_book;
 CREATE TABLE public.read_book (
 	read_book_id serial NOT NULL,
 	user_name varchar(15) NOT NULL,
@@ -68,6 +62,10 @@ CREATE TABLE public.read_book (
 	CONSTRAINT read_book_un UNIQUE (user_name, own_id),
 	CONSTRAINT read_book_fk_own FOREIGN KEY (own_id) REFERENCES public.own(own_id) ON DELETE CASCADE ON UPDATE RESTRICT,
 	CONSTRAINT read_book_fk_user FOREIGN KEY (user_name) REFERENCES public.users(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE public.jwt (
+       secret CHAR(64) NOT NULL
 );
 
 --------------------
@@ -80,9 +78,9 @@ insert into media values
 	('pdf'),
 	('epub');
 
-INSERT INTO public.users (user_name) VALUES
-	('ryhoh'),
-	('testuser');
+INSERT INTO public.users (user_name, hashed_password) VALUES
+	('ryhoh',    '$2b$12$uWqI2KUFmu9j.FBetR0HGOiXYLeeTNWrlBq0skxYi2iHChhm35vT.'),
+	('testuser', '$2b$12$uWqI2KUFmu9j.FBetR0HGOiXYLeeTNWrlBq0skxYi2iHChhm35vT.');
 
 INSERT INTO public.book (isbn13,title,thumbnail) VALUES
 	('9784873117584','ゼロから作るDeep Learning',NULL),
@@ -102,3 +100,6 @@ INSERT INTO public.read_book (user_name,own_id,is_read) VALUES
 	('ryhoh',2,2),
 	('ryhoh',3,0),
 	('testuser',4,2);
+
+INSERT INTO public.jwt VALUES
+       ('cc125635c56e2b29e842b7c520a5304eda31c3f0d409c09a911bcc5e742dcd60');

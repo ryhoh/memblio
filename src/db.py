@@ -31,6 +31,23 @@ def encode_thumbnail(table):
     return res
 
 
+#######################
+# SELECT Statements
+#######################
+
+def read_JWT_secret() -> str:
+    """
+    Read JWT secret
+
+    :return: JWT secret
+    """
+    with psycopg2.connect(DB) as conn:
+        with conn.cursor() as cur:
+            cur.execute("select secret from jwt;")
+            res: list[str] = cur.fetchone()
+            return res[0]
+
+
 def select_existing_books() -> List[Tuple]:
     """
     
@@ -72,6 +89,29 @@ SELECT book.title, own.isbn13, own.media_name, own.own_id,
             res = cur.fetchall()
     return encode_thumbnail(res)
 
+
+def read_password_from_users(name: str) -> bytes:
+    """
+    Read user's password
+
+    :return: Hashed password if user exists.
+    """
+    with psycopg2.connect(DB) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+SELECT hashed_password
+  FROM users
+ WHERE user_name = %s;
+            """, (name,))
+            res = cur.fetchone()
+            if res is None:
+                raise ValueError("User not exist:", name)
+            return res[0].tobytes()
+
+
+#################################
+# UPDATE and INSERT Statements
+#################################
 
 def register_book(isbn13: str) -> bool:
     """
