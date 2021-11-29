@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Union
+from typing import Optional, Union
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
@@ -30,16 +30,17 @@ async def get_books():
             'title': book[0],
             'isbn13': book[1],
             'media_name': book[2],
-            #'address',
             'own_id': book[3],
             # is_read,
             'thumbnail': book[5],
+            'address': book[6],
         }
     for book in books]
     return {
         "books": books,
         "media_names": db.media_names,
         "user_names": db.user_names,
+        "address_names": db.address_names,
     }
 
 
@@ -53,10 +54,10 @@ async def get_books_by_user(
             'title': book[0],
             'isbn13': book[1],
             'media_name': book[2],
-            #'address',
             'own_id': book[3],
             'is_read': book[4],
             'thumbnail': book[5],
+            'address': book[6],
         }
     for book in books]
     return {
@@ -64,18 +65,24 @@ async def get_books_by_user(
         "user_name": user.username,
         "media_names": db.media_names,
         "user_names": db.user_names,
+        "address_names": db.address_names,
     }
 
 
 @app.post("/api/v1/register/book/")
-def register_book(isbn13: str = Form(...), media: str = Form(...), owner: str = Form(...)):
+def register_book(
+    isbn13: str = Form(...),
+    media: str = Form(...),
+    owner: str = Form(...),
+    address: Optional[str] = Form(...),
+):
     isbn13 = isbn13.replace('-', '')
     if len(isbn13) != 13:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid ISBN (use 13-digit)")
     
     try:
         db.register_book(isbn13)
-        db.register_own(isbn13, media, owner)
+        db.register_own(isbn13, media, owner, address)
     except Exception as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Exception throwed:" + str(e))
 

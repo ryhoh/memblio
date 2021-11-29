@@ -18,6 +18,14 @@ CREATE SEQUENCE public.read_book_read_book_id_seq
 	CACHE 1
 	NO CYCLE;
 
+CREATE SEQUENCE public.shelf_address_shelf_address_id_seq
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 2147483647
+	START 1
+	CACHE 1
+	NO CYCLE;
+
 --------------------
 -- Table Definition
 --------------------
@@ -41,16 +49,24 @@ CREATE TABLE public.users (
 	CONSTRAINT user_pk PRIMARY KEY (user_name)
 );
 
+CREATE TABLE public.shelf_address (
+	shelf_address_id serial NOT NULL,
+	address_name varchar(31),
+	CONSTRAINT shelf_address_pk PRIMARY KEY (shelf_address_id)
+);
+
 CREATE TABLE public.own (
 	own_id serial NOT NULL,
 	isbn13 bpchar(13) NOT NULL,
 	media_name varchar(15) NOT NULL,
 	own_user varchar(15) NOT NULL,
+	shelf_address_id int4,
 	CONSTRAINT own_pk PRIMARY KEY (own_id),
 	CONSTRAINT own_un UNIQUE (isbn13, media_name),
 	CONSTRAINT own_fk_isbn13 FOREIGN KEY (isbn13) REFERENCES public.book(isbn13) ON DELETE RESTRICT ON UPDATE RESTRICT,
 	CONSTRAINT own_fk_media FOREIGN KEY (media_name) REFERENCES public.media("name") ON DELETE RESTRICT ON UPDATE CASCADE,
-	CONSTRAINT own_fk_user FOREIGN KEY (own_user) REFERENCES public.users(user_name) ON DELETE RESTRICT ON UPDATE CASCADE
+	CONSTRAINT own_fk_user FOREIGN KEY (own_user) REFERENCES public.users(user_name) ON DELETE RESTRICT ON UPDATE CASCADE,
+	CONSTRAINT own_fk_self_address_id FOREIGN KEY (shelf_address_id) REFERENCES public.shelf_address(shelf_address_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE public.read_book (
@@ -82,17 +98,21 @@ INSERT INTO public.users (user_name, hashed_password) VALUES
 	('ryhoh',    '$2b$12$uWqI2KUFmu9j.FBetR0HGOiXYLeeTNWrlBq0skxYi2iHChhm35vT.'),
 	('testuser', '$2b$12$uWqI2KUFmu9j.FBetR0HGOiXYLeeTNWrlBq0skxYi2iHChhm35vT.');
 
+INSERT INTO public.shelf_address (address_name) VALUES
+	('実家'),
+	('TK308');
+
 INSERT INTO public.book (isbn13,title,thumbnail) VALUES
 	('9784873117584','ゼロから作るDeep Learning',NULL),
 	('9784774192239','PythonユーザのためのJupyter「実践」入門',NULL),
 	('9784297100919','Vue.js入門',NULL),
 	('9784297100896','内部構造から学ぶPostgreSQL設計・運用計画の鉄則',NULL);
 
-INSERT INTO public.own (isbn13,media_name,own_user) VALUES
-	('9784873117584','paper','ryhoh'),
-	('9784774192239','paper','ryhoh'),
-	('9784297100896','kindle','ryhoh'),
-	('9784297100919','kindle','testuser');
+INSERT INTO public.own (isbn13,media_name,own_user,shelf_address_id) VALUES
+	('9784873117584','paper','ryhoh',1),
+	('9784774192239','paper','ryhoh',2),
+	('9784297100896','kindle','ryhoh',NULL),
+	('9784297100919','kindle','testuser',NULL);
 
 INSERT INTO public.read_book (user_name,own_id,is_read) VALUES
 	('testuser',1,1),

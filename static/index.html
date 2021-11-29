@@ -36,6 +36,9 @@
                 <select name="owner" v-model="new_book.owner">
                     <option v-for="(user_name, idx) in books.user_names" :key="user_name">{{ user_name }}</option>
                 </select>
+                <select name="owner" v-model="new_book.address">
+                    <option v-for="(address_name, idx) in books.address_names" :key="address_name">{{ address_name }}</option>
+                </select>
                 <a v-on:click="registerBook" style="text-decoration: underline; cursor: pointer;">Register</a>
             </form>
             
@@ -55,7 +58,7 @@
                     <td class="title_cell">{{ book.title }}</td>
                     <td class="isbn_cell">{{ book.isbn13 }}</td>
                     <td class="media_type_cell">{{ book.media_name }}</td>
-                    <td class="address_cell"></td>
+                    <td class="address_cell">{{ book.address }}</td>
                     <td class="read_cell" v-show="book.hasOwnProperty('is_read')">
                         <a style="user-select: none;" v-on:click="updateRead(idx, book.own_id, (book.is_read + 1) % 3)">
                             <span style="cursor: pointer;" v-show="book.is_read == 2">✅</span>

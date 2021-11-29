@@ -107,6 +107,7 @@ const vm = new Vue({
       params.append('isbn13', this.new_book.isbn13);
       params.append('media', this.new_book.media);
       params.append('owner', this.new_book.owner);
+      params.append('address', this.new_book.address);
     
       axios
         .post('/api/v1/register/book/', params, {

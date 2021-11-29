@@ -1,6 +1,6 @@
 import base64
 import os
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import psycopg2
 from psycopg2.errors import ForeignKeyViolation, UniqueViolation
@@ -19,6 +19,8 @@ with psycopg2.connect(DB) as sess:
         media_names = sorted(elm[0] for elm in cur.fetchall())
         cur.execute("SELECT user_name FROM users;")
         user_names = sorted(elm[0] for elm in cur.fetchall())
+        cur.execute("SELECT address_name FROM shelf_address;")
+        address_names = sorted(elm[0] for elm in cur.fetchall())
 
 
 def encode_thumbnail(table):
@@ -26,7 +28,7 @@ def encode_thumbnail(table):
     for row in table:
         binary = no_image if row[5] is None else row[5]
         res.append(
-            list(row[:5]) + [base64.b64encode(binary).decode('utf-8')]
+            list(row[:5]) + [base64.b64encode(binary).decode('utf-8')] + list(row[6:])
         )
     return res
 
@@ -51,14 +53,15 @@ def read_JWT_secret() -> str:
 def select_existing_books() -> List[Tuple]:
     """
     
-    :return: title, isbn13, media_name, own_id, is_read, thumbnail
+    :return: title, isbn13, media_name, own_id, is_read, thumbnail, address_name
     """
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
             cur.execute("""
-SELECT book.title, own.isbn13, own.media_name, own.own_id, NULL AS is_read, book.thumbnail
+SELECT book.title, own.isbn13, own.media_name, own.own_id, NULL AS is_read, book.thumbnail, sa.address_name
   FROM own
   JOIN book ON own.isbn13 = book.isbn13
+  LEFT OUTER JOIN shelf_address sa ON own.shelf_address_id = sa.shelf_address_id 
  ORDER BY book.title ASC, own.isbn13 ASC;
             """)
             res = cur.fetchall()
@@ -69,13 +72,13 @@ def select_existing_books_with_user(user_name: str) -> List[Tuple]:
     """
     特定ユーザの読書状況を付与して書架全体をセレクトする
     
-    :return: title, isbn13, media_name, own_id, is_read, thumbnail
+    :return: title, isbn13, media_name, own_id, is_read, thumbnail, address_name
     """
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
             cur.execute("""
 SELECT book.title, own.isbn13, own.media_name, own.own_id,
-       COALESCE(is_read, 0) AS is_read, book.thumbnail
+       COALESCE(is_read, 0) AS is_read, book.thumbnail, sa.address_name
   FROM book
   JOIN own ON book.isbn13 = own.isbn13
   LEFT OUTER JOIN (
@@ -84,6 +87,7 @@ SELECT book.title, own.isbn13, own.media_name, own.own_id,
         WHERE user_name = %s
        ) AS rb 
     ON own.own_id = rb.own_id
+  LEFT OUTER JOIN shelf_address sa ON own.shelf_address_id = sa.shelf_address_id 
  ORDER BY is_read ASC, book.title ASC, own.isbn13 ASC;
             """, (user_name,))
             res = cur.fetchall()
@@ -133,14 +137,22 @@ VALUES (%s, %s, %s);
             """, (book_info['isbn13'], book_info['title'], book_info['thumbnail']))
 
 
-def register_own(isbn13: str, media_name: str, own_user: str):
+def register_own(isbn13: str, media_name: str, own_user: str, address: Optional[str]):
     with psycopg2.connect(DB) as sess:
         with sess.cursor() as cur:
             try:
-                cur.execute("""
+                if address is None:
+                    cur.execute("""
 INSERT INTO own (isbn13, media_name, own_user)
 VALUES (%s, %s, %s);
-                """, (isbn13, media_name, own_user))
+                    """, (isbn13, media_name, own_user))
+                else:
+                    cur.execute("""
+INSERT INTO own (isbn13, media_name, own_user, shelf_address_id)
+VALUES (%s, %s, %s,
+              (SELECT shelf_address_id FROM shelf_address WHERE address_name = %s)
+       );
+                    """, (isbn13, media_name, own_user, address))
             except UniqueViolation:
                 raise ValueError("UniqueViolation with", (isbn13, media_name, own_user))
             except ForeignKeyViolation:
