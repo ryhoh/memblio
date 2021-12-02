@@ -28,6 +28,29 @@ const getBooksByUser = function() {
     .finally(() => this.loading = false);
 };
 
+const READIN_STATES = ['stacked', 'reading', 'read'];
+const filterBooks = function(filter_state) {
+  if (filter_state === 'all') {
+    this.shown_books = JSON.parse(JSON.stringify(this.books));
+  } else {
+    this.shown_books.books = this.books.books.filter(
+      book => (READIN_STATES[book.is_read] === filter_state)
+    );
+  }
+};
+
+const rerenderFilterBooksByFlag = function(is_read_flag) {
+  if (this.book_filter != 'all') {  // フィルタ使用状況に応じて，その画面を更新する
+    filterBooks.bind(this)(READIN_STATES[is_read_flag]);
+  } else {
+    filterBooks.bind(this)('all');
+  }
+};
+
+const rerenderFilterBooks = function(is_read_state) {
+  filterBooks.bind(this)(is_read_state);
+};
+
 
 // Vue.js
 const vm = new Vue({
@@ -93,7 +116,9 @@ const vm = new Vue({
           'headers': { 'Authorization': 'Bearer ' + this.token.access_token }
         })
         .then(response => {
+          old_is_read = this.books.books[idx].is_read;
           this.books.books[idx].is_read = next_is_read;
+          rerenderFilterBooksByFlag.bind(this)(old_is_read);
         })
         .catch(error => {
           console.error(error);
@@ -120,6 +145,8 @@ const vm = new Vue({
         .then(response => {
           if (this.loggined) {
             getBooksByUser.bind(this)();
+            this.book_filter = 'all';
+            rerenderFilterBooks.bind(this)(this.book_filter);
           } else {
             getBooks.bind(this)();
           }
@@ -134,14 +161,7 @@ const vm = new Vue({
 
   watch: {
     book_filter: function(new_val, _) {
-      if (new_val === 'all') {
-        this.shown_books = JSON.parse(JSON.stringify(this.books));
-      } else {
-        reading_states = ['stacked', 'reading', 'read']
-        this.shown_books.books = this.books.books.filter(
-          book => (reading_states[book.is_read] === new_val)
-        );
-      }
+      filterBooks.bind(this)(new_val);
     },
   },
 

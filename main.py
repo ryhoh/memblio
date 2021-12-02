@@ -1,4 +1,5 @@
 from datetime import timedelta
+import sys
 from typing import Optional, Union
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
@@ -78,12 +79,14 @@ def register_book(
 ):
     isbn13 = isbn13.replace('-', '')
     if len(isbn13) != 13:
+        sys.stderr.write("Invalid ISBN (use 13-digit)")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid ISBN (use 13-digit)")
     
     try:
         db.register_book(isbn13)
         db.register_own(isbn13, media, owner, address)
     except Exception as e:
+        sys.stderr.write("Exception throwed:" + str(e))
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Exception throwed:" + str(e))
 
     return {'result': 'success'}
