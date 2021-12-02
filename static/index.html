@@ -66,7 +66,7 @@
                     <th class="isbn_cell">ISBN</th>
                     <th class="media_type_cell">Media Type</th>
                     <th class="address_cell">Address</th>
-                    <th class="read_cell" v-show="books.hasOwnProperty('user_name')">Read</th>
+                    <th class="read_cell" v-show="books.hasOwnProperty('user_name') && book_filter == 'all'">Read</th>
                 </tr>
                 <tr v-for="(book, idx) in shown_books.books" :key="book.own_id" class="bg{{idx % 2}}">
                     <td class="icon_cell">
@@ -76,8 +76,8 @@
                     <td class="isbn_cell">{{ book.isbn13 }}</td>
                     <td class="media_type_cell">{{ book.media_name }}</td>
                     <td class="address_cell">{{ book.address }}</td>
-                    <td class="read_cell" v-show="book.hasOwnProperty('is_read')">
-                        <a style="user-select: none;" v-on:click="updateRead(idx, book.own_id, (book.is_read + 1) % 3)">
+                    <td class="read_cell" v-show="book.hasOwnProperty('is_read') && book_filter == 'all'">
+                        <a style="user-select: none;" v-on:click="updateRead(idx, book.own_id, book.is_read)">
                             <span style="cursor: pointer;" v-show="book.is_read == 2">✅</span>
                             <span style="cursor: pointer;" v-show="book.is_read == 1">📖</span>
                             <span style="cursor: pointer;" v-show="book.is_read == 0">📚</span>

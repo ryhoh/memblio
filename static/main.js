@@ -105,8 +105,9 @@ const vm = new Vue({
       getBooksByUser.bind(this)();
     },
 
-    updateRead: function(idx, own_id, next_is_read) {
+    updateRead: function(idx, own_id, current_is_read) {
       const params = new URLSearchParams();
+      next_is_read = (current_is_read + 1) % 3;
       params.append('user_name', this.user.username);
       params.append('own_id', own_id);
       params.append('is_read', next_is_read);
@@ -116,9 +117,10 @@ const vm = new Vue({
           'headers': { 'Authorization': 'Bearer ' + this.token.access_token }
         })
         .then(response => {
-          old_is_read = this.books.books[idx].is_read;
+          // old_is_read = this.books.books[idx].is_read;
+          // this.book_filter = 'all';  // 簡単のために，フィルタを解除してしまう
           this.books.books[idx].is_read = next_is_read;
-          rerenderFilterBooksByFlag.bind(this)(old_is_read);
+          rerenderFilterBooksByFlag.bind(this)(current_is_read);
         })
         .catch(error => {
           console.error(error);
@@ -145,7 +147,7 @@ const vm = new Vue({
         .then(response => {
           if (this.loggined) {
             getBooksByUser.bind(this)();
-            this.book_filter = 'all';
+            this.book_filter = 'all';  // 簡単のために，フィルタを解除してしまう
             rerenderFilterBooks.bind(this)(this.book_filter);
           } else {
             getBooks.bind(this)();
