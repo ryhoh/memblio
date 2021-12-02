@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/")
-async def root(request: Request):
+async def root():
     return FileResponse('static/index.html')
 
 

@@ -28,6 +28,7 @@
         </div>
 
         <div class="island" style="text-align: center;">
+            <!-- Book Register -->
             <form action="/api/v1/register/book/" method="POST">
                 <input type="text" name="isbn13" placeholder="ISBN (13 digits)" width="13" v-model="new_book.isbn13">
                 <select name="media" v-model="new_book.media">
@@ -41,7 +42,23 @@
                 </select>
                 <a v-on:click="registerBook" style="text-decoration: underline; cursor: pointer;">Register</a>
             </form>
+
+            <!-- Book Filter -->
+            <div class="island" style="text-align: center;">
+                <input type="radio" id="filter_all" name="book_filter" value="all" v-model="book_filter" checked>
+                <label for="filter_all">All</label>
+                |
+                <input type="radio" id="filter_stacked" name="book_filter" value="stacked" v-model="book_filter">
+                <label for="filter_stacked">Stacked</label>
+                |
+                <input type="radio" id="filter_reading" name="book_filter" value="reading" v-model="book_filter">
+                <label for="filter_reading">Reading</label>
+                |
+                <input type="radio" id="filter_read" name="book_filter" value="read" v-model="book_filter">
+                <label for="filter_read">Already Read</label>
+            </div>
             
+            <!-- Books -->
             <table class="centering">
                 <tr>
                     <th class="icon_cell"></th>
@@ -51,7 +68,7 @@
                     <th class="address_cell">Address</th>
                     <th class="read_cell" v-show="books.hasOwnProperty('user_name')">Read</th>
                 </tr>
-                <tr v-for="(book, idx) in books.books" :key="book.own_id" class="bg{{idx % 2}}">
+                <tr v-for="(book, idx) in shown_books.books" :key="book.own_id" class="bg{{idx % 2}}">
                     <td class="icon_cell">
                         <img v-bind:src="'data:image/jpeg;base64,' + book.thumbnail" width=48px>
                     </td>

@@ -3,6 +3,7 @@ const getBooks = function() {
     .get('/api/v1/get/books/')
     .then(response => {
       this.books = response.data;
+      this.shown_books = JSON.parse(JSON.stringify(this.books));
     })
     .catch(error => {
       console.error(error);
@@ -18,6 +19,7 @@ const getBooksByUser = function() {
     })
     .then(response => {
       this.books = response.data;
+      this.shown_books = JSON.parse(JSON.stringify(this.books));
     })
     .catch(error => {
       console.error(error);
@@ -38,11 +40,13 @@ const vm = new Vue({
       password: '',
     },
     books: {},
-    new_book: {
+    shown_books: {},
+    book_filter: 'all',
+    new_book: {  // for register
       isbn13: '',
       media: '',
       owner: '',
-    },  // for register
+    },
     errored: false,
     loggined: false,
   }),
@@ -125,6 +129,19 @@ const vm = new Vue({
           this.errored = true;
         })
         .finally(() => this.loading = false);
+    },
+  },
+
+  watch: {
+    book_filter: function(new_val, _) {
+      if (new_val === 'all') {
+        this.shown_books = JSON.parse(JSON.stringify(this.books));
+      } else {
+        reading_states = ['stacked', 'reading', 'read']
+        this.shown_books.books = this.books.books.filter(
+          book => (reading_states[book.is_read] === new_val)
+        );
+      }
     },
   },
 
