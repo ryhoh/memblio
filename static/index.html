@@ -44,7 +44,7 @@
             </form>
 
             <!-- Book Filter -->
-            <div class="island" style="text-align: center;">
+            <div class="island" style="text-align: center;" v-if="token !== null && token.hasOwnProperty('access_token')">
                 <input type="radio" id="filter_all" name="book_filter" value="all" v-model="book_filter" checked>
                 <label for="filter_all">All</label>
                 |
