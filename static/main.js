@@ -1,4 +1,6 @@
-const getBooks = function() {
+'use strict';
+
+function getBooks() {
   axios
     .get('/api/v1/get/books/')
     .then(response => {
@@ -12,7 +14,7 @@ const getBooks = function() {
     .finally(() => this.loading = false);
 };
 
-const getBooksByUser = function() {
+function getBooksByUser() {
   axios
     .post('/api/v1/get/books/byuser', {}, {
       'headers': { 'Authorization': 'Bearer ' + this.token.access_token }
@@ -29,7 +31,7 @@ const getBooksByUser = function() {
 };
 
 const READIN_STATES = ['stacked', 'reading', 'read'];
-const filterBooks = function(filter_state) {
+function filterBooks(filter_state) {
   if (filter_state === 'all') {
     this.shown_books = JSON.parse(JSON.stringify(this.books));
   } else {
@@ -39,7 +41,7 @@ const filterBooks = function(filter_state) {
   }
 };
 
-const rerenderFilterBooksByFlag = function(is_read_flag) {
+function rerenderFilterBooksByFlag(is_read_flag) {
   if (this.book_filter != 'all') {  // フィルタ使用状況に応じて，その画面を更新する
     filterBooks.bind(this)(READIN_STATES[is_read_flag]);
   } else {
@@ -47,7 +49,7 @@ const rerenderFilterBooksByFlag = function(is_read_flag) {
   }
 };
 
-const rerenderFilterBooks = function(is_read_state) {
+function rerenderFilterBooks(is_read_state) {
   filterBooks.bind(this)(is_read_state);
 };
 
@@ -107,7 +109,7 @@ const vm = new Vue({
 
     updateRead: function(idx, own_id, current_is_read) {
       const params = new URLSearchParams();
-      next_is_read = (current_is_read + 1) % 3;
+      const next_is_read = (current_is_read + 1) % 3;
       params.append('user_name', this.user.username);
       params.append('own_id', own_id);
       params.append('is_read', next_is_read);
